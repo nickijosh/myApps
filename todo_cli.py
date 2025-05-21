@@ -1,9 +1,31 @@
-# A simple To-Do List CLI App with "Mark as Done" feature
+import json
+import os
 
-# Each task is stored as a dictionary with keys: 'title' and 'done'
+# Filename to store tasks persistently
+FILENAME = "tasks.json"
+
+# Tasks will be loaded into this list at startup
 tasks = []
 
-# Display the menu options to the user
+# Load tasks from file if it exists
+def load_tasks():
+    if os.path.exists(FILENAME):
+        with open(FILENAME, "r") as f:
+            try:
+                data = json.load(f)
+                # Only load valid task dictionaries
+                if isinstance(data, list):
+                    global tasks
+                    tasks = data
+            except json.JSONDecodeError:
+                print("Warning: Could not parse tasks file. Starting fresh.")
+
+# Save current tasks to file
+def save_tasks():
+    with open(FILENAME, "w") as f:
+        json.dump(tasks, f, indent=4)
+
+# Display menu options
 def show_menu():
     print("\nTo-Do List Menu:")
     print("1. View tasks")
@@ -12,24 +34,23 @@ def show_menu():
     print("4. Remove a task")
     print("5. Exit")
 
-# Display all tasks, showing whether each is done or not
+# Show tasks with status symbols
 def view_tasks():
     if not tasks:
         print("No tasks yet.")
     else:
         print("Your tasks:")
         for i, task in enumerate(tasks, start=1):
-            # Display check mark if task is done, cross if not
-            status = "✔" if task['done'] else "✖"
-            print(f"{i}. [{status}] {task['title']}")
+            status = "✔" if task.get('done') else "✖"
+            print(f"{i}. [{status}] {task.get('title')}")
 
-# Add a new task to the list, with 'done' initially set to False
+# Add a new task to the list
 def add_task():
     title = input("Enter a new task: ")
     tasks.append({'title': title, 'done': False})
     print(f"Task '{title}' added.")
 
-# Mark a specific task as done by updating its 'done' status to True
+# Mark a task as done
 def mark_task_done():
     view_tasks()
     if tasks:
@@ -43,7 +64,7 @@ def mark_task_done():
         except ValueError:
             print("Please enter a valid number.")
 
-# Remove a task by its number (1-based index)
+# Remove a task from the list
 def remove_task():
     view_tasks()
     if tasks:
@@ -57,8 +78,10 @@ def remove_task():
         except ValueError:
             print("Please enter a valid number.")
 
-# Main loop to keep the app running until user chooses to exit
+# Main app loop
 def main():
+    load_tasks()  # Load tasks at the start
+
     while True:
         show_menu()
         choice = input("Choose an option: ")
@@ -71,11 +94,12 @@ def main():
         elif choice == '4':
             remove_task()
         elif choice == '5':
-            print("Goodbye!")
+            save_tasks()  # Save tasks before exiting
+            print("Tasks saved. Goodbye!")
             break
         else:
             print("Invalid option. Please try again.")
 
-# This ensures the script runs only when executed directly
+# Run the app
 if __name__ == "__main__":
     main()
